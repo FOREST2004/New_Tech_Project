@@ -4,9 +4,7 @@ import { SocketService } from "../socket/socket.service.js";
 const prisma = new PrismaClient();
 
 export class NotificationService {
-  /**
-   * Tạo notification cho một user cụ thể
-   */
+
   static async createNotification({ title, message, type = "GENERAL", recipientId }) {
     try {
       const notification = await prisma.notification.create({
@@ -18,7 +16,7 @@ export class NotificationService {
         },
       });
 
-      // Emit real-time notification to user
+      
       SocketService.emitToUser(recipientId, 'new-notification', {
         notification,
         unreadCount: await this.getUnreadCount(recipientId)
@@ -31,16 +29,14 @@ export class NotificationService {
     }
   }
 
-  /**
-   * Tạo notification cho tất cả members trong organization
-   */
+
   static async createNotificationForOrganization({ title, message, type = "GENERAL", organizationId, excludeUserId = null }) {
     try {
-      // Lấy tất cả members trong organization (trừ user được exclude)
+      
       const members = await prisma.user.findMany({
         where: {
           organizationId,
-          role: "MEMBER",
+          role: { in: ["ADMIN", "MEMBER"] },
           isActive: true,
           ...(excludeUserId && { id: { not: excludeUserId } }),
         },
@@ -49,7 +45,7 @@ export class NotificationService {
         },
       });
 
-      // Tạo notifications cho tất cả members
+      
       const notifications = await Promise.all(
         members.map((member) =>
           prisma.notification.create({
@@ -91,14 +87,12 @@ export class NotificationService {
     }
   }
 
-  /**
-   * Tạo notification về event mới cho tất cả members trong organization
-   */
+
   static async createEventNotification(event) {
     try {
       const { title, description, location, startAt, endAt, registrationStartAt, registrationEndAt, organizationId } = event;
 
-      // Format dates
+
       const formatDate = (date) => {
         if (!date) return "Chưa xác định";
         return new Date(date).toLocaleString("vi-VN", {
@@ -110,7 +104,7 @@ export class NotificationService {
         });
       };
 
-      // Tạo nội dung notification
+    
       const notificationTitle = `🎉 Sự kiện mới: ${title}`;
       
       let notificationMessage = `Có sự kiện mới được tạo!\n\n`;
@@ -134,7 +128,7 @@ export class NotificationService {
       
       notificationMessage += `\n🚀 Hãy đăng ký ngay để không bỏ lỡ cơ hội tham gia!`;
 
-      // Tạo notifications cho tất cả members trong organization
+   
       const notifications = await this.createNotificationForOrganization({
         title: notificationTitle,
         message: notificationMessage,
@@ -150,9 +144,6 @@ export class NotificationService {
     }
   }
 
-  /**
-   * Lấy notifications của user
-   */
   static async getUserNotifications(userId, page = 1, limit = 10) {
     try {
       const skip = (page - 1) * limit;
@@ -187,22 +178,20 @@ export class NotificationService {
     }
   }
 
-  /**
-   * Đánh dấu notification đã đọc
-   */
+ 
   static async markAsRead(notificationId, userId) {
     try {
       const notification = await prisma.notification.update({
         where: {
           id: notificationId,
-          recipientId: userId, // Đảm bảo user chỉ có thể mark read notification của mình
+          recipientId: userId, 
         },
         data: {
           isRead: true,
         },
       });
 
-      // Emit updated unread count
+     
       const unreadCount = await this.getUnreadCount(userId);
       SocketService.emitToUser(userId, 'notification-read', {
         notificationId,
@@ -216,9 +205,7 @@ export class NotificationService {
     }
   }
 
-  /**
-   * Đánh dấu tất cả notifications của user đã đọc
-   */
+
   static async markAllAsRead(userId) {
     try {
       const result = await prisma.notification.updateMany({
@@ -231,7 +218,7 @@ export class NotificationService {
         },
       });
 
-      // Emit updated unread count (should be 0)
+    
       SocketService.emitToUser(userId, 'all-notifications-read', {
         unreadCount: 0
       });
@@ -243,9 +230,7 @@ export class NotificationService {
     }
   }
 
-  /**
-   * Lấy số lượng notifications chưa đọc
-   */
+
   static async getUnreadCount(userId) {
     try {
       const count = await prisma.notification.count({
