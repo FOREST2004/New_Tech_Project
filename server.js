@@ -21,7 +21,7 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:3000"],
+    origin: ["http://localhost:3210"],
     methods: ["GET", "POST"]
   }
 });
@@ -31,7 +31,7 @@ const PORT = process.env.PORT;
 app.set('etag', false);
 
 app.use(cors({
-  origin: ["http://localhost:3000"],
+  origin: ["http://localhost:3210"],
   // credentials: true
 }));
 
@@ -65,24 +65,39 @@ app.get("/", (req, res) => {
   res.json({ message: "Event Management API is running!" });
 });
 
-// Socket.IO connection handling
+
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
-  // Join user to their organization room
+
   socket.on('join-organization', (organizationId) => {
     socket.join(`org-${organizationId}`);
     console.log(`🚐 User ${socket.id} joined organization ${organizationId}`);
+    
+ 
+    const orgRoom = io.sockets.adapter.rooms.get(`org-${organizationId}`);
+    console.log(`📊 Room org-${organizationId} has ${orgRoom?.size || 0} users:`, Array.from(orgRoom || []));
   });
 
-  // Join user to their personal room
+
   socket.on('join-user', (userId) => {
     socket.join(`user-${userId}`);
     console.log(`🚖 User ${socket.id} joined personal room ${userId}`);
+    
+   
+  
+    console.log('🏠 ALL ROOMS:');
+    io.sockets.adapter.rooms.forEach((sockets, roomName) => {
+      console.log(`   Room "${roomName}": ${sockets.size} users - [${Array.from(sockets).join(', ')}]`);
+    });
+  
   });
 
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
+    
+
+    console.log('-------------------');
   });
 });
 
