@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { HiOutlineMail, HiOutlineLockClosed, HiOutlineEye, HiOutlineEyeOff } from "react-icons/hi";
 import { FiCalendar, FiUsers, FiSettings } from "react-icons/fi";
-import { FaGoogle, FaGithub } from "react-icons/fa";
+import { FaGoogle } from "react-icons/fa";
 import ThemeToggle from "../ThemeToggle";
 
 function LoginForm({ onLogin, onForgot, error, loading }) {
@@ -17,17 +17,13 @@ function LoginForm({ onLogin, onForgot, error, loading }) {
   const handleGoogleLogin = () => {
     window.location.href = `${import.meta.env.REACT_APP_API_URL || 'http://localhost:4321'}/auth/google`;
   };
-  
-  const handleGithubLogin = () => {
-    window.location.href = `${import.meta.env.REACT_APP_API_URL || 'http://localhost:4321'}/auth/github`;
-  };
 
   return (
     <div className="min-h-screen 
       bg-gradient-to-br from-primary-500 via-white to-accent-300 
       dark:from-secondary-400 dark:via-secondary-600 dark:to-secondary-900 
-      flex items-center justify-center p-4 transition-all duration-300
-    ">
+      flex items-center justify-center p-4 transition-all duration-300">
+      
       <div className="absolute top-6 right-6 z-10">
         <ThemeToggle variant="simple" size="default" />
       </div>
@@ -138,7 +134,7 @@ function LoginForm({ onLogin, onForgot, error, loading }) {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="flex justify-center">
               <button
                 type="button"
                 onClick={handleGoogleLogin}
@@ -146,16 +142,7 @@ function LoginForm({ onLogin, onForgot, error, loading }) {
                 className="flex items-center justify-center w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
               >
                 <FaGoogle className="w-5 h-5 mr-2 text-red-500" />
-                Google
-              </button>
-              <button
-                type="button"
-                onClick={handleGithubLogin}
-                disabled={loading}
-                className="flex items-center justify-center w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
-              >
-                <FaGithub className="w-5 h-5 mr-2 text-gray-800 dark:text-gray-200" />
-                GitHub
+                Sign in with Google
               </button>
             </div>
 

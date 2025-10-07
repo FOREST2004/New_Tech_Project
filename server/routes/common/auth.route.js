@@ -9,7 +9,6 @@ const router = express.Router();
 router.post("/login", AuthController.login);
 
 // Google OAuth routes
-// Google OAuth routes
 router.get('/google', (req, res, next) => {
     console.log('🔄 Bắt đầu xác thực Google');
     console.log('📡 URL gọi:', req.originalUrl);
@@ -20,21 +19,10 @@ router.get('/google', (req, res, next) => {
     session: false, 
     scope: ['profile', 'email'] 
   }));
+
 router.get(
   '/google/callback',
   passport.authenticate('google', { session: false, failureRedirect: '/login' }),
-  (req, res) => {
-    // Successful authentication, redirect with token
-    const { token, user } = req.user;
-    res.redirect(`${process.env.CLIENT_URL}/oauth/callback?token=${token}&email=${encodeURIComponent(user.email)}&name=${encodeURIComponent(user.fullName || '')}&avatar=${encodeURIComponent(user.avatarUrl || '')}`);
-  }
-);
-
-// GitHub OAuth routes
-router.get('/github', passport.authenticate('github', { session: false, scope: ['user:email'] }));
-router.get(
-  '/github/callback',
-  passport.authenticate('github', { session: false, failureRedirect: '/login' }),
   (req, res) => {
     // Successful authentication, redirect with token
     const { token, user } = req.user;
