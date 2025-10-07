@@ -5,11 +5,16 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import passport from "passport";
+import "./config/passport.js";
+import session from "express-session";
+import pgSession from "connect-pg-simple";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.join(__dirname, ".env") });
 
+// Import routes
 import authRoutes from "./routes/common/auth.route.js";
 import adminRoutes from "./routes/admin/admin.route.js";
 import memberRoutes from "./routes/member/member.route.js";
@@ -28,15 +33,18 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT;
 
+// ✅ Disable etag to prevent caching issues
 app.set("etag", false);
 
+// ✅ CORS configuration
 app.use(
   cors({
     origin: ["http://localhost:3210"],
-    // credentials: true
+    credentials: true, // bật credentials khi dùng session
   })
 );
 
+// ✅ Custom headers
 app.use((req, res, next) => {
   res.set({
     // 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
@@ -48,14 +56,40 @@ app.use((req, res, next) => {
   next();
 });
 
+// ✅ Setup PostgreSQL session store
+const pgSessionStore = pgSession(session);
+
+app.use(
+  session({
+    store: new pgSessionStore({
+      conString: process.env.DATABASE_URL, // URL kết nối PostgreSQL
+      tableName: "user_sessions", // bảng để lưu session
+    }),
+    secret: process.env.SESSION_SECRET || "your-secret-key",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 ngày
+      secure: process.env.NODE_ENV === "production", // chỉ HTTPS trong production
+      httpOnly: true,
+    },
+  })
+);
+
+// ✅ Initialize passport (sau session)
+app.use(passport.initialize());
+app.use(passport.session());
+
+// ✅ Parse JSON
 app.use(express.json());
 
-// Make io accessible to routes
+// ✅ Make io accessible to routes
 app.use((req, res, next) => {
   req.io = io;
   next();
 });
 
+// ✅ Routes
 app.use("/auth", authRoutes);
 app.use("/admin", adminRoutes);
 app.use("/member", memberRoutes);

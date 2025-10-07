@@ -3,6 +3,8 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { SocketProvider } from "./contexts/SocketContext";
 import ToastNotification from "./components/common/notifications/ToastNotification.jsx";
 import LoginPage from "./pages/common/login/LoginPage.jsx";
+import OAuthCallbackPage from './pages/common/oauth/OAuthCallbackPage';
+import 'react-toastify/dist/ReactToastify.css';
 
 import AdminDashboardPage from "./pages/admin/dashboardPage/AdminDashboardPage.jsx";
 import AdminProfilePage from "./pages/admin/profile/AdminProfilePage.jsx";
@@ -48,7 +50,7 @@ function App() {
         <BrowserRouter>
           <Routes>
           <Route path="/login" element={<LoginPage />} />
-          
+          <Route path="/oauth/callback" element={<OAuthCallbackPage />} />          
           <Route path="/design-system" element={<DesignSystemPage />} />
 
           <Route
