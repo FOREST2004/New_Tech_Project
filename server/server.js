@@ -5,11 +5,16 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import passport from "passport";
+import "./config/passport.js";
+import session from "express-session";
+import pgSession from "connect-pg-simple";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-dotenv.config({ path: path.join(__dirname, '.env') });
+dotenv.config({ path: path.join(__dirname, ".env") });
 
+// Import routes
 import authRoutes from "./routes/common/auth.route.js";
 import adminRoutes from "./routes/admin/admin.route.js";
 import memberRoutes from "./routes/member/member.route.js";
@@ -22,40 +27,67 @@ const server = createServer(app);
 const io = new Server(server, {
   cors: {
     origin: ["http://localhost:3210"],
-    methods: ["GET", "POST"]
-  }
+    methods: ["GET", "POST"],
+  },
 });
 
 const PORT = process.env.PORT;
 
-app.set('etag', false);
+// ✅ Disable etag to prevent caching issues
+app.set("etag", false);
 
-app.use(cors({
-  origin: ["http://localhost:3210"],
-  // credentials: true
-}));
+// ✅ CORS configuration
+app.use(
+  cors({
+    origin: ["http://localhost:3210"],
+    credentials: true, // bật credentials khi dùng session
+  })
+);
 
+// ✅ Custom headers
 app.use((req, res, next) => {
   res.set({
-    // 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-    // 'Pragma': 'no-cache',
-    // 'Expires': '0',
-    // 'Surrogate-Control': 'no-store'
-    'Content-Type': 'application/json'
+    "Content-Type": "application/json",
   });
   next();
 });
 
+// ✅ Setup PostgreSQL session store
+const pgSessionStore = pgSession(session);
+
+app.use(
+  session({
+    store: new pgSessionStore({
+      conString: process.env.DATABASE_URL, // URL kết nối PostgreSQL
+      tableName: "user_sessions", // bảng để lưu session
+    }),
+    secret: process.env.SESSION_SECRET || "your-secret-key",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 ngày
+      secure: process.env.NODE_ENV === "production", // chỉ HTTPS trong production
+      httpOnly: true,
+    },
+  })
+);
+
+// ✅ Initialize passport (sau session)
+app.use(passport.initialize());
+app.use(passport.session());
+
+// ✅ Parse JSON
 app.use(express.json());
 
-// Make io accessible to routes
+// ✅ Make io accessible to routes
 app.use((req, res, next) => {
   req.io = io;
   next();
 });
 
-app.use("/auth", authRoutes); 
-app.use("/admin", adminRoutes); 
+// ✅ Routes
+app.use("/auth", authRoutes);
+app.use("/admin", adminRoutes);
 app.use("/member", memberRoutes);
 app.use("/profile", commonProfileRoutes);
 app.use("/event", commonEventRoutes);
@@ -65,43 +97,40 @@ app.get("/", (req, res) => {
   res.json({ message: "Event Management API is running!" });
 });
 
+// ✅ Socket.IO configuration
+io.on("connection", (socket) => {
+  console.log("User connected:", socket.id);
 
-io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
-
-
-  socket.on('join-organization', (organizationId) => {
+  socket.on("join-organization", (organizationId) => {
     socket.join(`org-${organizationId}`);
     console.log(`🚐 User ${socket.id} joined organization ${organizationId}`);
-    
- 
+
     const orgRoom = io.sockets.adapter.rooms.get(`org-${organizationId}`);
-    console.log(`📊 Room org-${organizationId} has ${orgRoom?.size || 0} users:`, Array.from(orgRoom || []));
+    console.log(
+      `📊 Room org-${organizationId} has ${orgRoom?.size || 0} users:`,
+      Array.from(orgRoom || [])
+    );
   });
 
-
-  socket.on('join-user', (userId) => {
+  socket.on("join-user", (userId) => {
     socket.join(`user-${userId}`);
     console.log(`🚖 User ${socket.id} joined personal room ${userId}`);
-    
-   
-  
-    console.log('🏠 ALL ROOMS:');
+
+    console.log("🏠 ALL ROOMS:");
     io.sockets.adapter.rooms.forEach((sockets, roomName) => {
-      console.log(`   Room "${roomName}": ${sockets.size} users - [${Array.from(sockets).join(', ')}]`);
+      console.log(
+        `   Room "${roomName}": ${sockets.size} users - [${Array.from(sockets).join(", ")}]`
+      );
     });
-  
   });
 
-  socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
-    
-
-    console.log('-------------------');
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
+    console.log("-------------------");
   });
 });
 
-// Export io for use in other modules
+// ✅ Export io for use in other modules
 export { io };
 
 server.listen(PORT, () => {
