@@ -1,0 +1,120 @@
+# ===== DEPENDENCIES =====
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ===== ENVIRONMENT & CONFIG =====
+.env
+.env.local
+.env.development
+.env.production
+!.env.example
+!.env.template
+config/local.json
+
+# ===== DATABASE =====
+*.db
+*.sqlite*
+database.db
+prisma/dev.db
+*.sql.backup
+
+# ===== LOGS =====
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ===== BUILD OUTPUTS =====
+build/
+dist/
+dist-ssr/
+out/
+.next/
+.nuxt/
+.cache/
+.parcel-cache/
+*.tsbuildinfo
+
+# ===== FRONTEND SPECIFIC =====
+# Vite
+*.local
+client/node_modules/
+client/package-lock.json
+
+# React/JSX
+.eslintcache
+
+# Storybook
+.storybook-static/
+storybook-static/
+
+# Coverage
+coverage/
+.nyc_output/
+*.lcov
+test-results/
+__tests__/coverage/
+
+# ===== CACHE & TEMP =====
+.npm/
+.rpt2_cache/
+.rts2_cache*/
+tmp/
+temp/
+*.tmp
+
+# ===== EDITOR & IDE =====
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ===== OS GENERATED =====
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ===== RUNTIME =====
+pids/
+*.pid
+*.seed
+*.pid.lock
+.node_repl_history
+
+# ===== PACKAGE OUTPUTS =====
+*.tgz
+*.tar.gz
+.yarn-integrity
+
+# ===== PRISMA =====
+.prisma/
+server/prisma/migrations/
+
+# ===== DOCKER =====
+Dockerfile.prod
+docker-compose.override.yml
+.dockerignore
+
+# ===== MISC =====
+.grunt/
+bower_components/
+jspm_packages/
+typings/
+.lock-wscript
