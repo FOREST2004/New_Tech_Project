@@ -13,7 +13,7 @@ const NotificationList = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // Fetch notifications
+ 
   const fetchNotifications = async (pageNum = 1) => {
     try {
       setLoading(true);
@@ -32,7 +32,7 @@ const NotificationList = () => {
     }
   };
 
-  // Fetch unread count
+
   const fetchUnreadCount = async () => {
     try {
       const response = await notificationService.getUnreadCount();
@@ -44,42 +44,63 @@ const NotificationList = () => {
     }
   };
 
-  // Mark notification as read
+
   const handleMarkAsRead = async (notificationId) => {
     try {
       await notificationService.markAsRead(notificationId);
-
-      // Update local state
+  
+  
       setNotifications((prev) =>
         prev.map((notif) =>
           notif.id === notificationId ? { ...notif, isRead: true } : notif
         )
       );
-
-      // Update unread count
+  
+     
       fetchUnreadCount();
+      
+     
+      if (window.refreshNotificationBadge) {
+        window.refreshNotificationBadge();
+      }
+      
+      
+      window.dispatchEvent(new CustomEvent('refreshNotificationBadge'));
+      
+      
+      localStorage.setItem('notification-refresh', Date.now().toString());
     } catch (err) {
       console.error("Error marking notification as read:", err);
     }
   };
 
-  // Mark all as read
+  
   const handleMarkAllAsRead = async () => {
     try {
       await notificationService.markAllAsRead();
-
-      // Update local state
+  
+      
       setNotifications((prev) =>
         prev.map((notif) => ({ ...notif, isRead: true }))
       );
-
+  
       setUnreadCount(0);
+      
+      
+      if (window.refreshNotificationBadge) {
+        window.refreshNotificationBadge();
+      }
+      
+      
+      window.dispatchEvent(new CustomEvent('refreshNotificationBadge'));
+      
+      localStorage.setItem('notification-refresh', Date.now().toString());
     } catch (err) {
       console.error("Error marking all notifications as read:", err);
     }
   };
 
-  // Listen for real-time socket events
+
   useEffect(() => {
     if (socket) {
       // Listen for new notifications (commented out for emitToUser)
@@ -100,22 +121,22 @@ const NotificationList = () => {
       socket.on('organization-notification', (data) => {
         console.log('🏢 Organization notification received in list:', data);
         
-        // Show toast notification
+ 
         if (window.showToast) {
           window.showToast('info', 'Thông báo tổ chức', data.title);
         }
         
-        // Refresh the notification list to get updated data
+     
         fetchNotifications();
         fetchUnreadCount();
       });
   
-      // Listen for notification read events
+   
       socket.on('notification-read', (data) => {
         setUnreadCount(data.unreadCount);
       });
   
-      // Listen for all notifications read
+    
       socket.on('all-notifications-read', (data) => {
         setNotifications(prev => 
           prev.map(notif => ({ ...notif, isRead: true }))
@@ -132,7 +153,7 @@ const NotificationList = () => {
     }
   }, [socket]);
 
-  // Format date
+  
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -154,7 +175,7 @@ const NotificationList = () => {
     }
   };
 
-  // Get notification icon based on type
+
   const getNotificationIcon = (type) => {
     switch (type) {
       case "EVENT":

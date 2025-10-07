@@ -1,50 +1,78 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { notificationService } from '../../../services/common/notification/notificationService.js';
 import { useSocket } from '../../../contexts/SocketContext.jsx';
 import { useTheme } from '../../../contexts/ThemeContext.jsx';
 
 const NotificationBadge = ({ className = "" }) => {
   const { isDarkMode } = useTheme();
-  const { socket } = useSocket();
+  const { socket, isConnected } = useSocket();
   const [unreadCount, setUnreadCount] = useState(0);
+  const pollingIntervalRef = useRef(null);
+  const lastSocketEventRef = useRef(Date.now());
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const fetchUnreadCount = async () => {
     try {
       const response = await notificationService.getUnreadCount();
       if (response.success) {
         setUnreadCount(response.unreadCount);
+        if (!isInitialized) {
+          setIsInitialized(true);
+        }
       }
     } catch (err) {
       console.error('Error fetching unread count:', err);
     }
   };
 
+ 
+  useEffect(() => {
+    const startPolling = () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+      
+      pollingIntervalRef.current = setInterval(() => {
+        const timeSinceLastSocketEvent = Date.now() - lastSocketEventRef.current;
+        
+        if (timeSinceLastSocketEvent > 30000 || !isConnected) {
+          fetchUnreadCount();
+        }
+      }, 15000);
+    };
+
+    startPolling();
+
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
+  }, [isConnected]);
+
+
   useEffect(() => {
     fetchUnreadCount();
   }, []);
 
-  // Listen for real-time socket events
+ 
   useEffect(() => {
-    if (socket) {
-      // Listen for new notifications
-    //   socket.on('new-notification', (data) => {
-    //     console.log('📢 New notification received:', data);
-    //     setUnreadCount(data.unreadCount);
-        
-    //     // Show browser notification if permission granted
-    //     if (Notification.permission === 'granted') {
-    //       new Notification(data.notification.title, {
-    //         body: data.notification.message.split('\n')[0], // First line only
-    //         icon: '/vite.svg'
-    //       });
-    //     }
-    //   });
+    if (isConnected && socket) {
+      fetchUnreadCount();
+    }
+  }, [isConnected, socket]);
 
-      // Listen for organization-wide notifications
-      socket.on('organization-notification', (data) => {
-        console.log('🏢 Organization notification received:', data);
+
+  useEffect(() => {
+    if (socket && isConnected) {
+      const handleConnect = () => {
+        lastSocketEventRef.current = Date.now();
+        fetchUnreadCount();
+      };
+      
+      const handleOrgNotification = (data) => {
+        lastSocketEventRef.current = Date.now();
         
-        // Show browser notification if permission granted
         if (Notification.permission === 'granted') {
           new Notification(data.title, {
             body: data.message,
@@ -52,49 +80,90 @@ const NotificationBadge = ({ className = "" }) => {
           });
         }
         
-        // Show toast notification if available
         if (window.showToast) {
           window.showToast(data.title, data.message, data.type || 'info');
         }
         
-        // Refresh unread count
         fetchUnreadCount();
-      });
+      };
 
-      // Listen for notification read events
-      socket.on('notification-read', (data) => {
-        console.log('✅ Notification marked as read:', data);
-        setUnreadCount(data.unreadCount);
-      });
+      const handleNotificationRead = (data) => {
+        lastSocketEventRef.current = Date.now();
+        
+        if (typeof data.unreadCount === 'number') {
+          setUnreadCount(data.unreadCount);
+        } else {
+          fetchUnreadCount();
+        }
+      };
 
-      // Listen for all notifications read
-      socket.on('all-notifications-read', (data) => {
-        console.log('✅ All notifications marked as read');
-        setUnreadCount(data.unreadCount);
-      });
+      const handleAllNotificationsRead = (data) => {
+        lastSocketEventRef.current = Date.now();
+        
+        if (typeof data.unreadCount === 'number') {
+          setUnreadCount(data.unreadCount);
+        } else {
+          fetchUnreadCount();
+        }
+      };
+
+      const handleAnyEvent = () => {
+        lastSocketEventRef.current = Date.now();
+      };
+
+      socket.on('connect', handleConnect);
+      socket.on('organization-notification', handleOrgNotification);
+      socket.on('notification-read', handleNotificationRead);
+      socket.on('all-notifications-read', handleAllNotificationsRead);
+      socket.onAny(handleAnyEvent);
 
       return () => {
-        // socket.off('new-notification');
-        socket.off('organization-notification');
-        socket.off('notification-read');
-        socket.off('all-notifications-read');
+        socket.off('connect', handleConnect);
+        socket.off('organization-notification', handleOrgNotification);
+        socket.off('notification-read', handleNotificationRead);
+        socket.off('all-notifications-read', handleAllNotificationsRead);
+        socket.offAny(handleAnyEvent);
       };
     }
-  }, [socket]);
+  }, [socket, isConnected]);
 
-  // Request notification permission on mount
+  // Request notification permission
   useEffect(() => {
     if (Notification.permission === 'default') {
       Notification.requestPermission();
     }
   }, []);
 
-  // Expose refresh function globally for other components to use
+
   useEffect(() => {
     window.refreshNotificationBadge = fetchUnreadCount;
     
     return () => {
       delete window.refreshNotificationBadge;
+    };
+  }, []);
+
+ 
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'notification-refresh') {
+        fetchUnreadCount();
+        localStorage.removeItem('notification-refresh');
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+ 
+    const handleCustomRefresh = () => {
+      fetchUnreadCount();
+    };
+    
+    window.addEventListener('refreshNotificationBadge', handleCustomRefresh);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('refreshNotificationBadge', handleCustomRefresh);
     };
   }, []);
 

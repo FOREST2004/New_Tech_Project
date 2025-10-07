@@ -43,11 +43,7 @@ const menuItems = [
     icon: FiBell,
     links: [
       { name: "View Notifications", path: "/admin/notifications" },
-      {
-        name: "Send Notification",
-        path: "/admin/notifications/send",
-        badge: 3,
-      },
+     
     ],
     showBadge: true,
   },

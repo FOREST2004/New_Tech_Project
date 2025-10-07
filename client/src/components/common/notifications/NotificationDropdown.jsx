@@ -12,7 +12,7 @@ const NotificationDropdown = () => {
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Fetch recent notifications
+  
   const fetchRecentNotifications = async () => {
     try {
       setLoading(true);
@@ -27,7 +27,7 @@ const NotificationDropdown = () => {
     }
   };
 
-  // Fetch unread count
+  
   const fetchUnreadCount = async () => {
     try {
       const response = await notificationService.getUnreadCount();
@@ -39,12 +39,12 @@ const NotificationDropdown = () => {
     }
   };
 
-  // Mark notification as read
+  
   const handleMarkAsRead = async (notificationId) => {
     try {
       await notificationService.markAsRead(notificationId);
       
-      // Update local state
+      
       setNotifications(prev => 
         prev.map(notif => 
           notif.id === notificationId 
@@ -53,14 +53,14 @@ const NotificationDropdown = () => {
         )
       );
       
-      // Update unread count
+      
       fetchUnreadCount();
     } catch (err) {
       console.error('Error marking notification as read:', err);
     }
   };
 
-  // Format date
+  
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -76,7 +76,7 @@ const NotificationDropdown = () => {
     }
   };
 
-  // Get notification icon
+
   const getNotificationIcon = (type) => {
     switch (type) {
       case 'EVENT':
@@ -88,7 +88,7 @@ const NotificationDropdown = () => {
     }
   };
 
-  // Handle click outside
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -102,18 +102,18 @@ const NotificationDropdown = () => {
     };
   }, []);
 
-  // Fetch data when dropdown opens
+  
   useEffect(() => {
     if (isOpen) {
       fetchRecentNotifications();
     }
   }, [isOpen]);
 
-  // Initial fetch
+
   useEffect(() => {
     fetchUnreadCount();
     
-    // Refresh every 30 seconds
+    
     const interval = setInterval(fetchUnreadCount, 30000);
     
     return () => clearInterval(interval);
@@ -124,7 +124,7 @@ const NotificationDropdown = () => {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* Bell Icon Button */}
+      
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`relative p-2 rounded-lg transition-colors ${
@@ -141,12 +141,12 @@ const NotificationDropdown = () => {
         )}
       </button>
 
-      {/* Dropdown */}
+      
       {isOpen && (
         <div className={`absolute right-0 mt-2 w-80 ${
           isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
         } border rounded-lg shadow-lg z-50`}>
-          {/* Header */}
+          
           <div className={`px-4 py-3 border-b ${
             isDarkMode ? 'border-gray-700' : 'border-gray-200'
           }`}>
@@ -168,7 +168,7 @@ const NotificationDropdown = () => {
             </div>
           </div>
 
-          {/* Notifications List */}
+          
           <div className="max-h-96 overflow-y-auto">
             {loading ? (
               <div className="flex justify-center items-center py-8">
@@ -228,7 +228,7 @@ const NotificationDropdown = () => {
             )}
           </div>
 
-          {/* Footer */}
+          
           {notifications.length > 0 && (
             <div className={`px-4 py-3 border-t ${
               isDarkMode ? 'border-gray-700' : 'border-gray-200'
