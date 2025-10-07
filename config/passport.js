@@ -1,13 +1,12 @@
 // server/config/passport.js
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
-import { Strategy as GitHubStrategy } from 'passport-github2';
+import { PrismaClient } from '@prisma/client';
 import { OAuthService } from '../services/common/auth/oauth.service.js';
 
+const prisma = new PrismaClient();
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
-const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 
 // Google OAuth2 Strategy
 passport.use(new GoogleStrategy({
@@ -26,22 +25,6 @@ passport.use(new GoogleStrategy({
   }
 ));
 
-// GitHub OAuth2 Strategy
-passport.use(new GitHubStrategy({
-    clientID: GITHUB_CLIENT_ID,
-    clientSecret: GITHUB_CLIENT_SECRET,
-    callbackURL: "/auth/github/callback",
-    scope: ['user:email']
-  },
-  async (accessToken, refreshToken, profile, done) => {
-    try {
-      const result = await OAuthService.findOrCreateUser(profile, 'github');
-      return done(null, result);
-    } catch (error) {
-      return done(error, null);
-    }
-  }
-));
 
 passport.serializeUser((user, done) => {
   done(null, user.id); // Chỉ lưu user id vào session
@@ -49,9 +32,19 @@ passport.serializeUser((user, done) => {
 
 passport.deserializeUser(async (id, done) => {
   try {
-    const user = await prisma.user.findUnique({ where: { id } });
+    const user = await prisma.user.findUnique({ 
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        avatarUrl: true,
+        role: true
+      }
+    });
     done(null, user);
   } catch (error) {
+    console.error('Error in deserializeUser:', error);
     done(error, null);
   }
 });
