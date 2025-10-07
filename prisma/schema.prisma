@@ -1,0 +1,132 @@
+// schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+enum EventStatus {
+  DRAFT
+  REGISTRATION
+  READY
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum NotificationType {
+  GENERAL
+  EVENT
+  SYSTEM
+}
+
+model Organization {
+  id        Int      @id @default(autoincrement())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  users  User[]
+  events Event[]
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  fullName     String?
+  phoneNumber  String?  
+  passwordHash String
+  role         Role     @default(MEMBER)
+  isActive     Boolean  @default(true)
+  avatarUrl    String?   // thêm trường avatar cho user
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @db.Timestamptz(6)
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId Int
+
+  createdEvents  Event[]         @relation("UserCreatedEvents")
+  registrations  Registration[]
+  notifications  Notification[]  @relation("UserNotifications")
+}
+
+model Event {
+  id                  Int       @id @default(autoincrement())
+  title               String
+  description         String?
+  location            String?
+  minAttendees        Int?
+  maxAttendees        Int?
+  startAt             DateTime? @db.Timestamptz(6)
+  endAt               DateTime? @db.Timestamptz(6)
+  registrationStartAt DateTime? @db.Timestamptz(6)
+  registrationEndAt   DateTime? @db.Timestamptz(6)
+  deposit             Decimal @default(0.0)
+  status              EventStatus @default(DRAFT)
+  createdAt           DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt           DateTime @updatedAt @db.Timestamptz(6)
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId Int
+
+  createdBy   User @relation("UserCreatedEvents", fields: [createdById], references: [id])
+  createdById Int
+
+  registrations Registration[]
+  attachments   Attachment[]
+}
+
+enum RegistrationStatus {
+  REGISTERED
+  CANCELLED
+  ATTENDED
+}
+
+model Registration {
+  id         Int      @id @default(autoincrement())
+  status     String   @default("REGISTERED")
+  attendance Boolean  @default(false)
+  depositPaid   Boolean  @default(false)   // cột mới để điểm danh member nộp tiền 
+  createdAt  DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(6)
+
+  event   Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId Int
+
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int
+
+  @@unique([eventId, userId])
+}
+
+model Attachment {
+  id        Int      @id @default(autoincrement())
+  filename  String?
+  url       String
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  event   Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId Int
+}
+
+model Notification {
+  id          Int              @id @default(autoincrement())
+  title       String
+  message     String
+  type        NotificationType @default(GENERAL)
+  isRead      Boolean          @default(false)
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+
+  recipient   User?             @relation("UserNotifications", fields: [recipientId], references: [id], onDelete: Cascade)
+  recipientId Int?
+}
