@@ -1,0 +1,22 @@
+.messaging-page {
+  min-height: 100vh;
+  background-color: #f9fafb;
+  padding: 20px 0;
+}
+
+.messaging-page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .messaging-page {
+    padding: 10px 0;
+  }
+  
+  .messaging-page-container {
+    padding: 0 10px;
+  }
+}

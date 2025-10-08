@@ -13,6 +13,7 @@ import {
   FiChevronRight,
   FiMenu,
   FiX,
+  FiMessageSquare,
 } from "react-icons/fi";
 import NotificationBadge from "../../common/notifications/NotificationBadge.jsx";
 
@@ -36,6 +37,13 @@ const menuItems = [
     links: [
       { name: "Upcoming Event", path: "/admin/upcoming-event" },
       { name: "My Event", path: "/admin/my-event" },
+    ],
+  },
+  {
+    name: "Messages",
+    icon: FiMessageSquare,
+    links: [
+      { name: "View Messages", path: "/admin/messages" },
     ],
   },
   {
