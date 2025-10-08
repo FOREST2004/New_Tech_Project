@@ -65,7 +65,7 @@ app.use(
       conString: process.env.DATABASE_URL, // URL kết nối PostgreSQL
       tableName: "user_sessions", // bảng để lưu session
     }),
-    secret: process.env.SESSION_SECRET || "your-secret-key",
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
