@@ -16,6 +16,7 @@ import memberRoutes from "./routes/member/member.route.js";
 import commonProfileRoutes from "./routes/common/profile.route.js";
 import commonEventRoutes from "./routes/common/event.route.js";
 import notificationRoutes from "./routes/common/notification.route.js";
+import messageRoutes from "./routes/common/message.route.js";
 
 const app = express();
 const server = createServer(app);
@@ -62,6 +63,7 @@ app.use("/member", memberRoutes);
 app.use("/profile", commonProfileRoutes);
 app.use("/event", commonEventRoutes);
 app.use("/notifications", notificationRoutes);
+app.use("/messages", messageRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "Event Management API is running!" });

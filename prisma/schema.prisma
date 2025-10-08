@@ -34,6 +34,8 @@ model User {
   createdEvents  Event[]        @relation("UserCreatedEvents")
   notifications  Notification[] @relation("UserNotifications")
   registrations  Registration[]
+  sentMessages   Message[]      @relation("SentMessages")
+  receivedMessages Message[]    @relation("ReceivedMessages")
   organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerId], name: "provider_composite_id")
@@ -95,6 +97,18 @@ model Notification {
   createdAt   DateTime         @default(now()) @db.Timestamptz(6)
   recipientId Int?
   recipient   User?            @relation("UserNotifications", fields: [recipientId], references: [id], onDelete: Cascade)
+}
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  content    String
+  createdAt  DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(6)
+  senderId   Int
+  receiverId Int?
+  isRead     Boolean  @default(false)
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver   User?    @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
 }
 
 model UserSession {
