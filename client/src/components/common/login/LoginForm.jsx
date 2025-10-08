@@ -15,7 +15,7 @@ function LoginForm({ onLogin, onForgot, error, loading }) {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = `${import.meta.env.REACT_APP_API_URL || 'http://localhost:4321'}/auth/google`;
+    window.location.href = `${import.meta.env.VITE_API_BASE}/auth/google`;
   };
 
   return (
@@ -128,7 +128,7 @@ function LoginForm({ onLogin, onForgot, error, loading }) {
                 <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400">
+                <span className="px-2 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 rounded-lg">
                   Or continue with
                 </span>
               </div>
