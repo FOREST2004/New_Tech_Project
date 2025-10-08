@@ -18,6 +18,12 @@ lerna-debug.log*
 .env.production.local
 config/local.json
 
+# Client & Server specific env files
+client/.env
+client/.env.*
+server/.env
+server/.env.*
+
 # ===== DATABASE =====
 *.db
 *.sqlite*
