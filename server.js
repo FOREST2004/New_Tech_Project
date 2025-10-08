@@ -74,24 +74,24 @@ io.on("connection", (socket) => {
 
   socket.on("join-user", (userId) => {
     socket.join(`user-${userId}`);
-    // console.log(`👤 User ${socket.id} joined personal room ${userId}`);
+    console.log(`👤 User ${socket.id} joined personal room ${userId}`);
 
   });
 
 
     socket.on("join-organization", (organizationId) => {
     socket.join(`org-${organizationId}`);
-    // console.log(`🏢 User ${socket.id} joined organization ${organizationId}`);
+    console.log(`🏢 User ${socket.id} joined organization ${organizationId}`);
 
     
-    // console.log("🏠 ALL ROOMS (after all):");
-    // io.sockets.adapter.rooms.forEach((sockets, roomName) => {
-    //   console.log(
-    //     `  +   Room "${roomName}": ${sockets.size} users - [${Array.from(
-    //       sockets
-    //     ).join(", ")}]`
-    //   );
-    // });
+    console.log("🏠 ALL ROOMS (after all):");
+    io.sockets.adapter.rooms.forEach((sockets, roomName) => {
+      console.log(
+        `  +   Room "${roomName}": ${sockets.size} users - [${Array.from(
+          sockets
+        ).join(", ")}]`
+      );
+    });
   });
 
   socket.on("disconnect", (reason) => {

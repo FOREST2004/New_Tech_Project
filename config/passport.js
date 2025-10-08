@@ -26,26 +26,33 @@ passport.use(new GoogleStrategy({
 ));
 
 
-passport.serializeUser((user, done) => {
-  done(null, user.id); // Chỉ lưu user id vào session
-});
 
-passport.deserializeUser(async (id, done) => {
-  try {
-    const user = await prisma.user.findUnique({ 
-      where: { id },
-      select: {
-        id: true,
-        email: true,
-        fullName: true,
-        avatarUrl: true,
-        role: true
-      }
-    });
-    done(null, user);
-  } catch (error) {
-    console.error('Error in deserializeUser:', error);
-    done(error, null);
-  }
-});
+
+
+
+
+// passport.serializeUser((user, done) => {
+//   done(null, user.id); // Chỉ lưu user id vào session
+// });
+
+// passport.deserializeUser(async (id, done) => {
+//   try {
+//     const user = await prisma.user.findUnique({ 
+//       where: { id },
+//       select: {
+//         id: true,
+//         email: true,
+//         fullName: true,
+//         avatarUrl: true,
+//         role: true
+//       }
+//     });
+//     done(null, user);
+//   } catch (error) {
+//     console.error('Error in deserializeUser:', error);
+//     done(error, null);
+//   }
+// });
+
+
 export default passport;
