@@ -101,7 +101,7 @@ const MessageBox = ({ isOpen, onClose, selectedUser }) => {
         <div className="message-box-header">
           <div className="user-info">
             <img 
-              src={selectedUser?.avatarUrl || '/default-avatar.png'} 
+              src={selectedUser?.avatarUrl ? `/images/${selectedUser.avatarUrl}` : '/default-avatar.png'} 
               alt={selectedUser?.fullName}
               className="user-avatar"
             />

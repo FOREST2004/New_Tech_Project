@@ -36,6 +36,7 @@ export const getMembersByOrganization = async (organizationId, page = 1, limit =
           email: true,
           fullName: true,
           phoneNumber: true,
+          avatarUrl: true,
           createdAt: true
         },
         orderBy: {

@@ -123,7 +123,7 @@ const MessageList = () => {
                   onClick={() => openMessageBox(user)}
                 >
                   <img 
-                    src={user.avatarUrl || '/default-avatar.png'} 
+                    src={user.avatarUrl ? `/images/${user.avatarUrl}` : '/default-avatar.png'} 
                     alt={user.fullName}
                     className="user-avatar"
                   />
@@ -157,7 +157,7 @@ const MessageList = () => {
                     })}
                   >
                     <img 
-                      src={conversation.avatar_url || '/default-avatar.png'} 
+                      src={conversation.avatar_url ? `/images/${conversation.avatar_url}` : '/default-avatar.png'} 
                       alt={conversation.full_name}
                       className="user-avatar"
                     />
@@ -196,7 +196,7 @@ const MessageList = () => {
                     })}
                   >
                     <img 
-                      src={member.avatarUrl || '/default-avatar.png'} 
+                      src={member.avatarUrl ? `/images/${member.avatarUrl}` : '/default-avatar.png'} 
                       alt={member.fullName}
                       className="user-avatar"
                     />

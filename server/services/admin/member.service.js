@@ -18,34 +18,37 @@ export class MemberService {
   }
 
   static async updateProfileMember(userId, data) {
-    const { fullName, phoneNumber } = data;
-    
-    const updated = await prisma.user.update({
+    const user = await prisma.user.update({
       where: { id: userId },
-      data: { fullName, phoneNumber },
-      select: { id: true, fullName: true, email: true, phoneNumber: true }
+      data,
+      select: { id: true, fullName: true, email: true, phoneNumber: true, role: true, organizationId: true }
     });
     
-    return updated;
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    return user;
   }
 
   static async changePasswordMember(userId, currentPassword, newPassword) {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+    
     if (!user) {
       throw new Error("User not found");
     }
 
-    const valid = await bcrypt.compare(currentPassword, user.passwordHash);
-    if (!valid) {
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!isPasswordValid) {
       throw new Error("Current password is incorrect");
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
-
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
     await prisma.user.update({
       where: { id: userId },
-      data: { passwordHash: hashedPassword }
+      data: { passwordHash: hashedNewPassword }
     });
   }
 
@@ -73,6 +76,7 @@ export class MemberService {
         phoneNumber: true,
         isActive: true,
         role: true,
+        avatarUrl: true,
         createdAt: true
       }
     });
@@ -141,69 +145,63 @@ export class MemberService {
   }
 
   static async lockMember(memberId) {
-
-    const targetMember = await prisma.user.findUnique({
-      where: { id: memberId },
-      select: { role: true, fullName: true }
+    const member = await prisma.user.findUnique({
+      where: { id: memberId }
     });
 
-    if (!targetMember) {
+    if (!member) {
       throw new Error("Member not found");
     }
 
-    if (targetMember.role === "ADMIN") {
-      throw new Error("Cannot lock admin users");
+    if (!member.isActive) {
+      throw new Error("Member is already locked");
     }
 
-    const member = await prisma.user.update({
+    const updatedMember = await prisma.user.update({
       where: { id: memberId },
-      data: { isActive: false },
+      data: { isActive: false }
     });
 
-    return member;
+    return updatedMember;
   }
 
   static async unlockMember(memberId) {
-    const targetMember = await prisma.user.findUnique({
-      where: { id: memberId },
-      select: { role: true, fullName: true }
+    const member = await prisma.user.findUnique({
+      where: { id: memberId }
     });
 
-    if (!targetMember) {
+    if (!member) {
       throw new Error("Member not found");
     }
 
-    if (targetMember.role === "ADMIN") {
-      throw new Error("Cannot unlock admin users");
+    if (member.isActive) {
+      throw new Error("Member is already active");
     }
 
-    const member = await prisma.user.update({
+    const updatedMember = await prisma.user.update({
       where: { id: memberId },
-      data: { isActive: true },
+      data: { isActive: true }
     });
 
-    return member;
+    return updatedMember;
   }
 
   static async resetPassword(memberId, newPassword) {
-    const targetMember = await prisma.user.findUnique({
-      where: { id: memberId },
-      select: { role: true, fullName: true }
+    const member = await prisma.user.findUnique({
+      where: { id: memberId }
     });
 
-    if (!targetMember) {
+    if (!member) {
       throw new Error("Member not found");
     }
 
-    if (targetMember.role === "ADMIN") {
-      throw new Error("Cannot reset password for admin users");
-    }
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    const passwordHash = await bcrypt.hash(newPassword, 10);
-
-    await prisma.user.update({
+    const updatedMember = await prisma.user.update({
       where: { id: memberId },
-      data: { passwordHash },
+      data: { passwordHash: hashedPassword }
     });
+
+    return updatedMember;
   }
 }
