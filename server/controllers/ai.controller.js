@@ -4,7 +4,8 @@ import { chatOllama, generateOllama, listModels } from '../services/ai/ollamaCli
 import { initSSE, sendData, sendEvent, endSSE } from '../utils/sse.js';
 import { splitNdjson } from '../utils/parseNdjson.js';
 import { sysEventAssistant, promptEventDescription, promptTagsFromDesc, promptRegistrationSummary } from '../services/ai/prompts.js';
-// import { upsertEventEmbedding, searchSimilarEvents } from '../services/ai/embeddings.js'; // nếu dùng
+// Import RAG services
+import AIContextService from '../src/services/aiContextService.js';
 
 const ChatBody = z.object({
   messages: z.array(z.object({
@@ -13,11 +14,46 @@ const ChatBody = z.object({
   })),
 });
 
+// Initialize AI Context Service
+const aiContextService = new AIContextService();
+
+// Enhanced chat stream with RAG
 export async function chatStream(req, res) {
   initSSE(res);
   try {
     const parsed = ChatBody.parse(req.body);
-    const streamRes = await chatOllama({ messages: parsed.messages, stream: true });
+    
+    // Get the latest user message for context analysis
+    const userMessages = parsed.messages.filter(msg => msg.role === 'user');
+    const latestUserMessage = userMessages[userMessages.length - 1]?.content || '';
+    
+    // Get organization ID from session or request (you may need to adjust this based on your auth system)
+    const organizationId = req.user?.organizationId || req.session?.organizationId || null;
+    
+    // Create enhanced prompt with context
+    const { enhancedPrompt, context, hasContext } = await aiContextService.enhancePromptWithContext(
+      latestUserMessage, 
+      organizationId
+    );
+    
+    // Replace the system message with enhanced prompt if we have relevant data
+    let enhancedMessages = [...parsed.messages];
+    if (hasContext) {
+      // Replace or add system message with context
+      const systemMessageIndex = enhancedMessages.findIndex(msg => msg.role === 'system');
+      const contextSystemMessage = { role: 'system', content: enhancedPrompt };
+      
+      if (systemMessageIndex >= 0) {
+        enhancedMessages[systemMessageIndex] = contextSystemMessage;
+      } else {
+        enhancedMessages.unshift(contextSystemMessage);
+      }
+      
+      // Log context summary for debugging
+      console.log('RAG Context:', aiContextService.getContextSummary(context));
+    }
+
+    const streamRes = await chatOllama({ messages: enhancedMessages, stream: true });
 
     if (!streamRes.ok || !streamRes.body) {
       const err = await streamRes.text();
@@ -30,23 +66,49 @@ export async function chatStream(req, res) {
       for (const line of lines) {
         try {
           const data = JSON.parse(line);
+          // Ollama trả về từng token riêng lẻ trong message.content
           const token = data.message?.content ?? '';
-          sendData(res, { token, done: !!data.done });
-          if (data.done) return endSSE(res);
+          
+          if (token && token.trim()) {
+            sendData(res, { token, done: !!data.done });
+          }
+          if (data.done) {
+            // Send suggested questions if we have context
+            if (hasContext && context) {
+              const suggestions = aiContextService.getSuggestedQuestions(context);
+              sendData(res, { suggestions, done: true });
+            }
+            return endSSE(res);
+          }
         } catch { /* bỏ qua */ }
       }
     }
   } catch (e) {
+    console.error('Chat stream error:', e);
     sendEvent(res, 'error', { error: e.message });
     endSSE(res);
   }
 }
 
+// Enhanced generate once with context
 export async function generateOnce(req, res) {
-  const { prompt } = req.body ?? {};
-  const r = await generateOllama({ prompt, stream: false });
-  const json = await r.json();
-  res.json(json);
+  try {
+    const { prompt, organizationId } = req.body ?? {};
+    
+    // Create enhanced prompt with context
+    const { enhancedPrompt, hasContext } = await aiContextService.enhancePromptWithContext(
+      prompt, 
+      organizationId || req.user?.organizationId || req.session?.organizationId
+    );
+    
+    const finalPrompt = hasContext ? enhancedPrompt : prompt;
+    const r = await generateOllama({ prompt: finalPrompt, stream: false });
+    const json = await r.json();
+    res.json(json);
+  } catch (error) {
+    console.error('Generate once error:', error);
+    res.status(500).json({ error: error.message });
+  }
 }
 
 export async function getModels(req, res) {
@@ -84,4 +146,30 @@ export async function aiSummarizeRegistration(req, res) {
   const r = await chatOllama({ messages: [sys, user], stream: false });
   const json = await r.json();
   res.json({ summary: json?.message?.content ?? '' });
+}
+
+// New endpoint to get context information
+export async function getContextInfo(req, res) {
+  try {
+    const { query } = req.query;
+    const organizationId = req.user?.organizationId || req.session?.organizationId || null;
+    
+    if (!query) {
+      return res.status(400).json({ error: 'Query parameter is required' });
+    }
+    
+    const context = await aiContextService.contextService.getRelevantContext(query, organizationId);
+    const summary = aiContextService.getContextSummary(context);
+    const suggestions = aiContextService.getSuggestedQuestions(context);
+    
+    res.json({
+      context,
+      summary,
+      suggestions,
+      hasContext: context.hasContext || false
+    });
+  } catch (error) {
+    console.error('Get context info error:', error);
+    res.status(500).json({ error: error.message });
+  }
 }

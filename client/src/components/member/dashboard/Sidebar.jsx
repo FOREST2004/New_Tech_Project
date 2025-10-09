@@ -12,6 +12,7 @@ import {
   FiMenu,
   FiX,
   FiMessageSquare,
+  FiCpu,
 } from "react-icons/fi";
 import NotificationBadge from "../../common/notifications/NotificationBadge.jsx";
 
@@ -34,6 +35,13 @@ const menuItems = [
     icon: FiMessageSquare,
     links: [
       { name: "View Messages", path: "/member/messages" },
+    ],
+  },
+  {
+    name: "AI Assistant",
+    icon: FiCpu,
+    links: [
+      { name: "AI Playground", path: "/member/ai-playground" },
     ],
   },
   {

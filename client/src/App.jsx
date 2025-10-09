@@ -27,6 +27,7 @@ import UpcomingEventsPage from "./pages/common/event/UpcommingEventsPage.jsx";
 import MyEventsPage from "./pages/common/event/MyEventsPage.jsx";
 import NotificationsPage from "./pages/common/notifications/NotificationsPage.jsx";
 import MessagingPage from "./pages/common/messaging/MessagingPage.jsx";
+import AiPlayground from "./pages/AiPlayground.jsx";
 import DesignSystemPage from "./pages/DesignSystemPage.jsx";
 
 function App() {
@@ -80,6 +81,7 @@ function App() {
             <Route path="my-event" element={<MyEventsPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="messages" element={<MessagingPage />} />
+            <Route path="ai-playground" element={<AiPlayground />} />
 
             <Route
               path="notifications/send"
@@ -103,6 +105,7 @@ function App() {
             <Route path="profile/change-password" element={<ChangePasswordPage/>}/>
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="messages" element={<MessagingPage />} />
+            <Route path="ai-playground" element={<AiPlayground />} />
             
           </Route>
 

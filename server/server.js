@@ -28,7 +28,7 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:3210"],
+    origin: true, // Allow all origins in development
     methods: ["GET", "POST"],
   },
 });
@@ -41,7 +41,7 @@ app.set("etag", false);
 // ✅ CORS configuration
 app.use(
   cors({
-    origin: ["http://localhost:3210"],
+    origin: true, // Allow all origins in development
     credentials: true, // bật credentials khi dùng session
   })
 );
@@ -108,30 +108,30 @@ app.get("/", (req, res) => {
 });
 
 io.on("connection", (socket) => {
-  console.log("💰 User connected:", socket.id);
+  // console.log("💰 User connected:", socket.id);
 
 
 
   socket.on("join-user", (userId) => {
     socket.join(`user-${userId}`);
-    console.log(`👤 User ${socket.id} joined personal room ${userId}`);
+    // console.log(`👤 User ${socket.id} joined personal room ${userId}`);
 
   });
 
 
     socket.on("join-organization", (organizationId) => {
     socket.join(`org-${organizationId}`);
-    console.log(`🏢 User ${socket.id} joined organization ${organizationId}`);
+    // console.log(`🏢 User ${socket.id} joined organization ${organizationId}`);
 
     
-    console.log("🏠 ALL ROOMS (after all):");
-    io.sockets.adapter.rooms.forEach((sockets, roomName) => {
-      console.log(
-        `  +   Room "${roomName}": ${sockets.size} users - [${Array.from(
-          sockets
-        ).join(", ")}]`
-      );
-    });
+    // console.log("🏠 ALL ROOMS (after all):");
+    // io.sockets.adapter.rooms.forEach((sockets, roomName) => {
+    //   console.log(
+    //     `  +   Room "${roomName}": ${sockets.size} users - [${Array.from(
+    //       sockets
+    //     ).join(", ")}]`
+    //   );
+    // });
   });
 
   socket.on("disconnect", (reason) => {

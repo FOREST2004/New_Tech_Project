@@ -1,6 +1,6 @@
 // client/src/services/aiService.js
 export async function chatStream(messages, onToken) {
-    const res = await fetch('/api/ai/chat', {
+    const res = await fetch('http://localhost:4321/api/ai/test-chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include', // nếu bạn dùng cookie session
@@ -21,8 +21,15 @@ export async function chatStream(messages, onToken) {
       buffer = parts.pop() || '';
       for (const part of parts) {
         if (part.startsWith('data: ')) {
-          const payload = JSON.parse(part.slice(6));
-          if (payload.token) onToken?.(payload.token, !!payload.done);
+          try {
+            const payload = JSON.parse(part.slice(6));
+            if (payload.token && payload.token.trim()) {
+              onToken?.(payload.token, !!payload.done);
+            }
+            if (payload.done) break;
+          } catch (e) {
+            console.warn('Failed to parse SSE data:', part);
+          }
         }
       }
     }

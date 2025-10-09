@@ -80,12 +80,12 @@ export const SocketProvider = ({ children }) => {
 
 
       newSocket.on("disconnect", () => {
-        console.log("❌ Disconnected from server");
+        // console.log("❌ Disconnected from server");
         setIsConnected(false);
       });
 
       newSocket.on("connect_error", (error) => {
-        console.error("❌ Connection error:", error);
+        // console.error("❌ Connection error:", error);
         setIsConnected(false);
       });
 
