@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 class MessageService {
-  // Gửi tin nhắn mới
+  // Gửi tin nhắn
   async sendMessage(senderId, receiverId, content) {
     try {
       const message = await prisma.message.create({
@@ -30,17 +30,21 @@ class MessageService {
           },
         },
       });
-      return message;
+
+      return {
+        success: true,
+        data: message,
+      };
     } catch (error) {
       throw new Error(`Lỗi khi gửi tin nhắn: ${error.message}`);
     }
   }
 
-  // Lấy danh sách tin nhắn giữa hai người dùng
+  // Lấy cuộc trò chuyện giữa 2 người
   async getConversation(userId1, userId2, page = 1, limit = 50) {
     try {
-      const skip = (page - 1) * limit;
-      
+      const offset = (page - 1) * limit;
+
       const messages = await prisma.message.findMany({
         where: {
           OR: [
@@ -67,43 +71,46 @@ class MessageService {
           },
         },
         orderBy: {
-          createdAt: 'desc',
+          createdAt: 'asc',
         },
-        skip,
+        skip: offset,
         take: limit,
       });
 
-      return messages.reverse(); // Đảo ngược để tin nhắn cũ nhất ở trên
+      return {
+        success: true,
+        data: messages,
+      };
     } catch (error) {
       throw new Error(`Lỗi khi lấy cuộc trò chuyện: ${error.message}`);
     }
   }
 
-  // Lấy danh sách cuộc trò chuyện của một người dùng
+  // Lấy danh sách cuộc trò chuyện của user
   async getUserConversations(userId) {
     try {
       const conversations = await prisma.$queryRaw`
         SELECT DISTINCT
           CASE 
-            WHEN m.sender_id = ${userId} THEN m.receiver_id
-            ELSE m.sender_id
+            WHEN m."senderId" = ${userId} THEN m."receiverId"
+            ELSE m."senderId"
           END as other_user_id,
-          u.full_name,
+          u."fullName" as full_name,
           u.email,
-          u.avatar_url,
+          u."avatarUrl" as avatar_url,
           m.content as last_message,
-          m.created_at as last_message_time,
-          COUNT(CASE WHEN m.receiver_id = ${userId} AND m.is_read = false THEN 1 END) as unread_count
+          m."createdAt" as last_message_time,
+          COUNT(CASE WHEN m."receiverId" = ${userId} AND m."isRead" = false THEN 1 END) as unread_count
         FROM "Message" m
         JOIN "User" u ON (
           CASE 
-            WHEN m.sender_id = ${userId} THEN u.id = m.receiver_id
-            ELSE u.id = m.sender_id
+            WHEN m."senderId" = ${userId} THEN u.id = m."receiverId"
+            ELSE u.id = m."senderId"
           END
         )
-        WHERE m.sender_id = ${userId} OR m.receiver_id = ${userId}
-        GROUP BY other_user_id, u.full_name, u.email, u.avatar_url, m.content, m.created_at
-        ORDER BY m.created_at DESC
+        WHERE m."senderId" = ${userId} OR m."receiverId" = ${userId}
+        GROUP BY other_user_id, u."fullName", u.email, u."avatarUrl", m.content, m."createdAt"
+        ORDER BY m."createdAt" DESC
       `;
 
       return conversations;
@@ -133,7 +140,7 @@ class MessageService {
   // Đánh dấu tất cả tin nhắn trong cuộc trò chuyện đã đọc
   async markConversationAsRead(userId, otherUserId) {
     try {
-      const messages = await prisma.message.updateMany({
+      const result = await prisma.message.updateMany({
         where: {
           senderId: otherUserId,
           receiverId: userId,
@@ -143,13 +150,13 @@ class MessageService {
           isRead: true,
         },
       });
-      return messages;
+      return result;
     } catch (error) {
       throw new Error(`Lỗi khi đánh dấu cuộc trò chuyện đã đọc: ${error.message}`);
     }
   }
 
-  // Lấy số lượng tin nhắn chưa đọc
+  // Lấy số tin nhắn chưa đọc
   async getUnreadCount(userId) {
     try {
       const count = await prisma.message.count({
@@ -164,7 +171,7 @@ class MessageService {
     }
   }
 
-  // Tìm kiếm người dùng để nhắn tin
+  // Tìm kiếm người dùng
   async searchUsers(query, currentUserId) {
     try {
       const users = await prisma.user.findMany({
@@ -201,7 +208,11 @@ class MessageService {
         },
         take: 10,
       });
-      return users;
+
+      return {
+        success: true,
+        data: users,
+      };
     } catch (error) {
       throw new Error(`Lỗi khi tìm kiếm người dùng: ${error.message}`);
     }
