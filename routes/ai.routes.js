@@ -1,6 +1,6 @@
 // routes/ai.routes.js
 import { Router } from 'express';
-import auth from '../middleware/auth.js';
+import { authMiddleware } from '../middleware/auth.js';
 import { aiRateLimit } from '../middleware/aiRateLimit.js';
 import {
   chatStream, generateOnce, getModels,
@@ -9,12 +9,12 @@ import {
 
 const router = Router();
 
-router.get('/models', auth, getModels);
-router.post('/chat', auth, aiRateLimit, chatStream);             // SSE stream
-router.post('/generate', auth, aiRateLimit, generateOnce);       // non-stream
+router.get('/models', authMiddleware, getModels);
+router.post('/chat', authMiddleware, aiRateLimit, chatStream);             // SSE stream
+router.post('/generate', authMiddleware, aiRateLimit, generateOnce);       // non-stream
 
-router.post('/event/description', auth, aiRateLimit, aiEventDescription);
-router.post('/event/suggest-tags', auth, aiRateLimit, aiSuggestTags);
-router.post('/registration/summarize', auth, aiRateLimit, aiSummarizeRegistration);
+router.post('/event/description', authMiddleware, aiRateLimit, aiEventDescription);
+router.post('/event/suggest-tags', authMiddleware, aiRateLimit, aiSuggestTags);
+router.post('/registration/summarize', authMiddleware, aiRateLimit, aiSummarizeRegistration);
 
 export default router;
