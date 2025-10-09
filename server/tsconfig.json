@@ -1,0 +1,11 @@
+{
+    "compilerOptions": {
+      "target": "ES2020",
+      "module": "ESNext",
+      "moduleResolution": "Bundler",
+      "strict": true,
+      "skipLibCheck": true         // quan trọng để bỏ qua lỗi file .d.ts trong node_modules
+    },
+    "include": ["./src/**/*", "./routes/**/*", "./controllers/**/*", "./middleware/**/*"],
+    "exclude": ["node_modules", "**/node_modules/**"]
+  }

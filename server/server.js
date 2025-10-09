@@ -22,6 +22,7 @@ import commonProfileRoutes from "./routes/common/profile.route.js";
 import commonEventRoutes from "./routes/common/event.route.js";
 import notificationRoutes from "./routes/common/notification.route.js";
 import messageRoutes from "./routes/common/message.route.js";
+import aiRoutes from './routes/ai.routes.js';
 
 const app = express();
 const server = createServer(app);
@@ -83,6 +84,9 @@ app.use(passport.session());
 
 // ✅ Parse JSON
 app.use(express.json());
+
+// ✅ AI Routes
+app.use('/api/ai', aiRoutes);
 
 // ✅ Make io accessible to routes
 app.use((req, res, next) => {
