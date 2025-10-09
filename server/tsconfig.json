@@ -4,8 +4,19 @@
       "module": "ESNext",
       "moduleResolution": "Bundler",
       "strict": true,
-      "skipLibCheck": true         // quan trọng để bỏ qua lỗi file .d.ts trong node_modules
+      "skipLibCheck": true,
+      "allowJs": true,
+      "checkJs": false,
+      "noEmit": true              // ← THÊM DÒNG NÀY để không tạo output files
     },
-    "include": ["./src/**/*", "./routes/**/*", "./controllers/**/*", "./middleware/**/*"],
-    "exclude": ["node_modules", "**/node_modules/**"]
-  }
+    "include": [
+      "./**/*.js",
+      "./routes/**/*", 
+      "./controllers/**/*", 
+      "./middleware/**/*",
+      "./services/**/*",
+      "./config/**/*",
+      "./utils/**/*"
+    ],
+    "exclude": ["node_modules", "**/node_modules/**", "prisma/**/*", "tools/**/*"]
+}
