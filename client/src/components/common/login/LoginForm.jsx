@@ -1,7 +1,7 @@
-// components/LoginForm.jsx
 import React, { useState } from "react";
 import { HiOutlineMail, HiOutlineLockClosed, HiOutlineEye, HiOutlineEyeOff } from "react-icons/hi";
 import { FiCalendar, FiUsers, FiSettings } from "react-icons/fi";
+import { FaGoogle } from "react-icons/fa";
 import ThemeToggle from "../ThemeToggle";
 
 function LoginForm({ onLogin, onForgot, error, loading }) {
@@ -14,18 +14,20 @@ function LoginForm({ onLogin, onForgot, error, loading }) {
     onLogin(email, password);
   };
 
+  const handleGoogleLogin = () => {
+    window.location.href = `${import.meta.env.VITE_API_BASE}/auth/google`;
+  };
+
   return (
     <div className="min-h-screen 
       bg-gradient-to-br from-primary-500 via-white to-accent-300 
       dark:from-secondary-400 dark:via-secondary-600 dark:to-secondary-900 
-      flex items-center justify-center p-4 transition-all duration-300
-    ">
-
+      flex items-center justify-center p-4 transition-all duration-300">
+      
       <div className="absolute top-6 right-6 z-10">
         <ThemeToggle variant="simple" size="default" />
       </div>
       
-    
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-200 dark:bg-primary-800 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse-soft"></div>
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-accent-200 dark:bg-accent-800 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse-soft"></div>
@@ -106,7 +108,6 @@ function LoginForm({ onLogin, onForgot, error, loading }) {
               </div>
             )}
 
-         
             <button
               type="submit"
               disabled={loading}
@@ -122,12 +123,34 @@ function LoginForm({ onLogin, onForgot, error, loading }) {
               )}
             </button>
 
-          
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 rounded-lg">
+                  Or continue with
+                </span>
+              </div>
+            </div>
+
+            <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={handleGoogleLogin}
+                disabled={loading}
+                className="flex items-center justify-center w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
+              >
+                <FaGoogle className="w-5 h-5 mr-2 text-red-500" />
+                Sign in with Google
+              </button>
+            </div>
+
             <div className="text-center">
               <button
                 type="button"
                 onClick={onForgot}
-                className="text-primary-600 hover:text-primary-700 text-sm font-medium transition-colors duration-200"
+                className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 text-sm font-medium transition-colors duration-200"
               >
                 Forgot your password?
               </button>
@@ -135,25 +158,24 @@ function LoginForm({ onLogin, onForgot, error, loading }) {
           </form>
         </div>
 
-   
         <div className="mt-8 grid grid-cols-3 gap-4 animate-fade-in">
           <div className="text-center">
             <div className="inline-flex items-center justify-center w-12 h-12 bg-primary-100 dark:bg-primary-800 rounded-xl mb-2">
               <FiCalendar className="w-6 h-6 text-primary-600" />
             </div>
-            <p className="text-xs text-secondary-600 font-medium">Event Management</p>
+            <p className="text-xs text-secondary-600 dark:text-gray-300 font-medium">Event Management</p>
           </div>
           <div className="text-center">
             <div className="inline-flex items-center justify-center w-12 h-12 bg-accent-100 dark:bg-accent-900 rounded-xl mb-2">
               <FiUsers className="w-6 h-6 text-accent-600" />
             </div>
-            <p className="text-xs text-secondary-600 font-medium">Member Portal</p>
+            <p className="text-xs text-secondary-600 dark:text-gray-300 font-medium">Member Portal</p>
           </div>
           <div className="text-center">
             <div className="inline-flex items-center justify-center w-12 h-12 bg-warning-100 dark:bg-accent-800 rounded-xl mb-2">
               <FiSettings className="w-6 h-6 text-warning-600" />
             </div>
-            <p className="text-xs text-secondary-600 font-medium">Admin Tools</p>
+            <p className="text-xs text-secondary-600 dark:text-gray-300 font-medium">Admin Tools</p>
           </div>
         </div>
       </div>
