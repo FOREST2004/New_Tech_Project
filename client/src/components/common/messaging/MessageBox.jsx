@@ -25,6 +25,54 @@ const MessageBox = ({ isOpen, onClose, selectedUser }) => {
   }, [selectedUser, isOpen]);
 
   useEffect(() => {
+    if (selectedUser && isOpen) {
+      // Bỏ phần load tin nhắn cũ, chỉ reset về trống
+      setMessages([]);
+      setLoading(false);
+    }
+  }, [selectedUser, isOpen]);
+
+  useEffect(() => {
+    if (selectedUser && isOpen) {
+      // Bỏ phần load tin nhắn cũ, chỉ reset messages về empty
+      setMessages([]);
+      setLoading(false);
+    }
+  }, [selectedUser, isOpen]);
+
+  useEffect(() => {
+    if (selectedUser && isOpen) {
+      // Bỏ phần load tin nhắn cũ, chỉ reset về trống
+      setMessages([]);
+      setLoading(false);
+    }
+  }, [selectedUser, isOpen]);
+
+  // Có thể bỏ luôn hàm loadConversation này nếu không dùng
+  // const loadConversation = async () => {
+  //   try {
+  //     setLoading(true);
+  //     const response = await messageService.getConversation(selectedUser.id);
+  //     
+  //     // Xử lý response format từ server
+  //     if (response.success && response.data) {
+  //       // response.data đã là array messages từ server
+  //       const messagesData = Array.isArray(response.data) ? response.data : [];
+  //       setMessages(messagesData);
+  //       console.log('Loaded messages:', messagesData); // Debug log
+  //     } else {
+  //       console.warn('API response indicates failure:', response);
+  //       setMessages([]);
+  //     }
+  //   } catch (error) {
+  //     console.error('Lỗi khi tải cuộc trò chuyện:', error);
+  //     setMessages([]); // Đảm bảo messages luôn là array khi có lỗi
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  useEffect(() => {
     if (socket) {
       socket.on('new_message', handleNewMessage);
       return () => {
@@ -36,33 +84,40 @@ const MessageBox = ({ isOpen, onClose, selectedUser }) => {
   const handleNewMessage = (message) => {
     const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
     
-    // Hiển thị tin nhắn nếu:
-    // 1. User hiện tại gửi cho selectedUser (message.senderId === currentUser.id && message.receiverId === selectedUser.id)
-    // 2. selectedUser gửi cho user hiện tại (message.senderId === selectedUser.id && message.receiverId === currentUser.id)
+    // Sửa logic kiểm tra: so sánh với currentUser.id thay vì selectedUser.id
     if (selectedUser && currentUser.id && 
         ((message.senderId === currentUser.id && message.receiverId === selectedUser.id) ||
          (message.senderId === selectedUser.id && message.receiverId === currentUser.id))) {
-      
-      // Kiểm tra xem message đã tồn tại chưa để tránh duplicate
-      setMessages(prev => {
-        const messageExists = prev.some(msg => msg.id === message.id);
-        if (messageExists) {
-          return prev;
-        }
-        return [...prev, message];
-      });
-    }
-  };
+    
+    // Kiểm tra xem message đã tồn tại chưa để tránh duplicate
+    setMessages(prev => {
+      const messageExists = prev.some(msg => msg.id === message.id);
+      if (messageExists) {
+        return prev;
+      }
+      return [...prev, message];
+    });
+  }
+};
 
   const loadConversation = async () => {
     try {
       setLoading(true);
       const response = await messageService.getConversation(selectedUser.id);
-      if (response.success) {
-        setMessages(response.data);
+      
+      // Xử lý response format từ server
+      if (response.success && response.data) {
+        // response.data đã là array messages từ server
+        const messagesData = Array.isArray(response.data) ? response.data : [];
+        setMessages(messagesData);
+        console.log('Loaded messages:', messagesData); // Debug log
+      } else {
+        console.warn('API response indicates failure:', response);
+        setMessages([]);
       }
     } catch (error) {
       console.error('Lỗi khi tải cuộc trò chuyện:', error);
+      setMessages([]); // Đảm bảo messages luôn là array khi có lỗi
     } finally {
       setLoading(false);
     }
@@ -115,19 +170,24 @@ const MessageBox = ({ isOpen, onClose, selectedUser }) => {
             <div className="loading">Đang tải...</div>
           ) : (
             <>
-              {messages.map((message) => (
-                <div 
-                  key={message.id} 
-                  className={`message ${message.senderId === selectedUser.id ? 'received' : 'sent'}`}
-                >
-                  <div className="message-content">
-                    {message.content}
+              {Array.isArray(messages) && messages.length > 0 ? (
+                // Trong phần render messages
+                messages.map((message) => (
+                  <div 
+                    key={message.id} 
+                    className={`message ${message.senderId === JSON.parse(localStorage.getItem('currentUser') || '{}').id ? 'sent' : 'received'}`}
+                  >
+                    <div className="message-content">
+                      {message.content}
+                    </div>
+                    <div className="message-time">
+                      {formatTime(message.createdAt)}
+                    </div>
                   </div>
-                  <div className="message-time">
-                    {formatTime(message.createdAt)}
-                  </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <div className="no-messages">Chưa có tin nhắn nào</div>
+              )}
               <div ref={messagesEndRef} />
             </>
           )}

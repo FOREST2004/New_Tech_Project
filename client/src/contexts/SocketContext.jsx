@@ -134,6 +134,13 @@ export const SocketProvider = ({ children }) => {
         triggerNotificationRefresh();
       });
 
+      // Thêm vào trong useEffect, sau các event listeners khác
+      newSocket.on("new_message", (messageData) => {
+        console.log("📨 Received new message:", messageData);
+        // Broadcast message event để MessageBox có thể lắng nghe
+        window.dispatchEvent(new CustomEvent('new_message', { detail: messageData }));
+      });
+
       setSocket(newSocket);
 
       return () => {

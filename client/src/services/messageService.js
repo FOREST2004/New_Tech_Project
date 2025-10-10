@@ -22,18 +22,29 @@ const messageService = {
       return response.data;
     } catch (error) {
       console.error('Lỗi khi lấy cuộc trò chuyện:', error);
-      throw error;
+      // Trả về format consistent với success response
+      return { 
+        success: false, 
+        data: [], 
+        error: error.message,
+        pagination: { page: 1, limit: 50, total: 0 }
+      };
     }
   },
 
-  // Lấy danh sách tất cả cuộc trò chuyện
+  // Lấy danh sách tất cả cuộc trò chuyện  
   async getConversations() {
     try {
       const response = await api.get('/messages/conversations');
       return response.data;
     } catch (error) {
       console.error('Lỗi khi lấy danh sách cuộc trò chuyện:', error);
-      throw error;
+      // Trả về format consistent với success response
+      return { 
+        success: false, 
+        data: [], 
+        error: error.message 
+      };
     }
   },
 
