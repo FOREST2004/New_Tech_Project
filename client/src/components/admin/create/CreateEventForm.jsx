@@ -7,6 +7,16 @@ import { showErrorAlert } from "../../../utils/errorHandler";
 
 const CreateEventForm = () => {
   const [form, setForm] = useState({
+    // title: "",
+    // description: "",
+    // location: "",
+    // minAttendees: "",
+    // maxAttendees: "",
+    // deposit: "",
+    // startAt: "",
+    // endAt: "",
+    // registrationStartAt: "",
+    // registrationEndAt: "",
     title: "Tech Workshop",
     description: "This is a sample event for testing purposes. A comprehensive workshop covering the latest technologies and best practices in software development.",
     location: "Conference Room A, Building 1",
