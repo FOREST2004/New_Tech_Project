@@ -1,6 +1,29 @@
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
+// Helper function để convert BigInt thành Number
+const convertBigIntToNumber = (obj) => {
+  if (obj === null || obj === undefined) return obj;
+  
+  if (typeof obj === 'bigint') {
+    return Number(obj);
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(convertBigIntToNumber);
+  }
+  
+  if (typeof obj === 'object') {
+    const converted = {};
+    for (const [key, value] of Object.entries(obj)) {
+      converted[key] = convertBigIntToNumber(value);
+    }
+    return converted;
+  }
+  
+  return obj;
+};
+
 class MessageService {
   // Gửi tin nhắn
   async sendMessage(senderId, receiverId, content) {
@@ -44,7 +67,7 @@ class MessageService {
   async getConversation(userId1, userId2, page = 1, limit = 50) {
     try {
       const offset = (page - 1) * limit;
-
+  
       const messages = await prisma.message.findMany({
         where: {
           OR: [
@@ -76,11 +99,8 @@ class MessageService {
         skip: offset,
         take: limit,
       });
-
-      return {
-        success: true,
-        data: messages,
-      };
+  
+      return messages; // Trả về trực tiếp array messages
     } catch (error) {
       throw new Error(`Lỗi khi lấy cuộc trò chuyện: ${error.message}`);
     }
@@ -89,31 +109,70 @@ class MessageService {
   // Lấy danh sách cuộc trò chuyện của user
   async getUserConversations(userId) {
     try {
-      const conversations = await prisma.$queryRaw`
-        SELECT DISTINCT
-          CASE 
-            WHEN m."senderId" = ${userId} THEN m."receiverId"
-            ELSE m."senderId"
-          END as other_user_id,
-          u."fullName" as full_name,
-          u.email,
-          u."avatarUrl" as avatar_url,
-          m.content as last_message,
-          m."createdAt" as last_message_time,
-          COUNT(CASE WHEN m."receiverId" = ${userId} AND m."isRead" = false THEN 1 END) as unread_count
-        FROM "Message" m
-        JOIN "User" u ON (
-          CASE 
-            WHEN m."senderId" = ${userId} THEN u.id = m."receiverId"
-            ELSE u.id = m."senderId"
-          END
-        )
-        WHERE m."senderId" = ${userId} OR m."receiverId" = ${userId}
-        GROUP BY other_user_id, u."fullName", u.email, u."avatarUrl", m.content, m."createdAt"
-        ORDER BY m."createdAt" DESC
-      `;
+      // Lấy tất cả tin nhắn liên quan đến user
+      const messages = await prisma.message.findMany({
+        where: {
+          OR: [
+            { senderId: userId },
+            { receiverId: userId }
+          ]
+        },
+        include: {
+          sender: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              avatarUrl: true
+            }
+          },
+          receiver: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              avatarUrl: true
+            }
+          }
+        },
+        orderBy: {
+          createdAt: 'desc'
+        }
+      });
 
-      return conversations;
+      // Xử lý để lấy cuộc trò chuyện gần nhất với mỗi người
+      const conversationsMap = new Map();
+      
+      for (const message of messages) {
+        const otherUserId = message.senderId === userId ? message.receiverId : message.senderId;
+        const otherUser = message.senderId === userId ? message.receiver : message.sender;
+        
+        if (!conversationsMap.has(otherUserId)) {
+          // Đếm tin nhắn chưa đọc từ người này
+          const unreadCount = await prisma.message.count({
+            where: {
+              senderId: otherUserId,
+              receiverId: userId,
+              isRead: false
+            }
+          });
+
+          conversationsMap.set(otherUserId, {
+            other_user_id: otherUserId,
+            full_name: otherUser.fullName,
+            email: otherUser.email,
+            avatar_url: otherUser.avatarUrl,
+            last_message: message.content,
+            last_message_time: message.createdAt,
+            unread_count: unreadCount
+          });
+        }
+      }
+
+      const conversations = Array.from(conversationsMap.values());
+      
+      // Convert BigInt to Number để tránh lỗi JSON serialization
+      return convertBigIntToNumber(conversations);
     } catch (error) {
       throw new Error(`Lỗi khi lấy danh sách cuộc trò chuyện: ${error.message}`);
     }

@@ -14,14 +14,18 @@ class MessageController {
         });
       }
 
+      // Trong sendMessage method
       const message = await messageService.sendMessage(senderId, receiverId, content);
       
       // Emit socket event cho real-time messaging
       if (req.io) {
-        // Emit cho người nhận
-        req.io.to(`user-${receiverId}`).emit('new_message', message);
-        // Emit cho người gửi (để sync trên nhiều device)
-        req.io.to(`user-${senderId}`).emit('new_message', message);
+      // Emit message.data thay vì message
+      const messageToEmit = message.data;
+      
+      // Emit cho người nhận
+      req.io.to(`user-${receiverId}`).emit('new_message', messageToEmit);
+      // Emit cho người gửi (để sync trên nhiều device)
+      req.io.to(`user-${senderId}`).emit('new_message', messageToEmit);
       }
 
       res.status(201).json({
@@ -45,9 +49,9 @@ class MessageController {
       const currentUserId = req.user.id;
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 50;
-
+  
       const messages = await messageService.getConversation(currentUserId, parseInt(userId), page, limit);
-
+  
       res.json({
         success: true,
         data: messages,
