@@ -24,6 +24,16 @@ export default defineConfig(({ mode }) => {
         }
       }
     },
+    // Add preview server configuration for production
+    preview: {
+      port: process.env.PORT || 4173,
+      host: '0.0.0.0',
+      allowedHosts: [
+        'thuan-client-9a13f65bae85.herokuapp.com',
+        'localhost',
+        '127.0.0.1'
+      ]
+    },
     // Disable build cache
     build: {
       rollupOptions: {
