@@ -41,15 +41,22 @@ export class OAuthService {
 
       // If user still not found, create a new one
       if (!user) {
-        // Get the first organization or create a default one
-        let organization = await prisma.organization.findFirst();
+        // Always use organization ID = 1 as default
+        let organization = await prisma.organization.findUnique({
+          where: { id: 1 }
+        });
+        
+        // If organization with ID 1 doesn't exist, get the first one or create default
         if (!organization) {
-          organization = await prisma.organization.create({
-            data: {
-              name: "Default Organization",
-              slug: "default-org"
-            }
-          });
+          organization = await prisma.organization.findFirst();
+          if (!organization) {
+            organization = await prisma.organization.create({
+              data: {
+                name: "Default Organization",
+                slug: "default-org"
+              }
+            });
+          }
         }
 
         user = await prisma.user.create({
@@ -59,7 +66,7 @@ export class OAuthService {
             avatarUrl: profile.photos?.[0]?.value,
             provider,
             providerId: profile.id,
-            organization: { connect: { id: organization.id } }
+            organizationId: 1  // Explicitly set organization ID to 1
           },
           include: { organization: true }
         });
