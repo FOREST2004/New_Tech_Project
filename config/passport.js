@@ -12,7 +12,9 @@ const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 passport.use(new GoogleStrategy({
     clientID: GOOGLE_CLIENT_ID,
     clientSecret: GOOGLE_CLIENT_SECRET,
-    callbackURL: "http://localhost:4321/auth/google/callback",
+    callbackURL: process.env.NODE_ENV === 'production' 
+      ? `${process.env.BASE_URL}/auth/google/callback`
+      : "http://localhost:4321/auth/google/callback",
     scope: ['profile', 'email']
   },
   async (accessToken, refreshToken, profile, done) => {
