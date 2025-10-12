@@ -23,7 +23,7 @@ import commonProfileRoutes from "./routes/common/profile.route.js";
 import commonEventRoutes from "./routes/common/event.route.js";
 import notificationRoutes from "./routes/common/notification.route.js";
 import messageRoutes from "./routes/common/message.route.js";
-import aiRoutes from './routes/ai.routes.js';
+// import aiRoutes from './routes/ai.routes.js';
 
 const app = express();
 const server = createServer(app);
