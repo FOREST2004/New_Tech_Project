@@ -28,22 +28,41 @@ router.post('/chat', async (req, res) => {
       throw new Error(`AI Service error: ${response.status}`);
     }
 
-    // Forward the streaming response
+    // Set proper headers for streaming
     res.writeHead(200, {
       'Content-Type': 'text/plain; charset=utf-8',
       'Transfer-Encoding': 'chunked',
       'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive'
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Content-Type'
     });
 
-    response.body.pipe(res);
+    // Handle streaming response properly
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+        res.write(chunk);
+      }
+    } finally {
+      reader.releaseLock();
+      res.end();
+    }
 
   } catch (error) {
     console.error('AI Route error:', error);
-    res.status(500).json({ 
-      error: 'AI service unavailable',
-      details: error.message 
-    });
+    if (!res.headersSent) {
+      res.status(500).json({ 
+        error: 'AI service unavailable',
+        details: error.message 
+      });
+    }
   }
 });
 
