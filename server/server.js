@@ -9,6 +9,7 @@ import passport from "passport";
 import "./config/passport.js";
 import session from "express-session";
 import pgSession from "connect-pg-simple";
+import aiRoutes from './routes/ai.routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -102,6 +103,7 @@ app.use("/profile", commonProfileRoutes);
 app.use("/event", commonEventRoutes);
 app.use("/notifications", notificationRoutes);
 app.use("/messages", messageRoutes);
+
 
 app.get("/", (req, res) => {
   res.json({ message: "Event Management API is running!" });
