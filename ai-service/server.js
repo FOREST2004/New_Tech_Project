@@ -25,35 +25,57 @@ app.get('/', (req, res) => {
   });
 });
 
-// Chat endpoint
+// Chat endpoint with streaming support
 app.post('/chat', (req, res) => {
   try {
-    const { message } = req.body;
+    const { messages, message } = req.body;
     
-    if (!message) {
+    // Support both formats
+    const userMessage = message || (messages && messages[messages.length - 1]?.content) || '';
+    
+    if (!userMessage) {
       return res.status(400).json({ 
         error: 'Message is required' 
       });
     }
 
-    console.log(`Chat request: "${message}"`);
+    console.log(`Chat request: "${userMessage}"`);
 
-    // Simple AI response
+    // Set headers for streaming
+    res.writeHead(200, {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Transfer-Encoding': 'chunked',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Content-Type'
+    });
+
+    // Simple AI responses
     const responses = [
-      `Xin chào! Bạn vừa nói: "${message}". Tôi là AI assistant của bạn.`,
-      `Cảm ơn bạn đã gửi: "${message}". Tôi hiểu và sẵn sàng giúp đỡ.`,
-      `Thú vị! Về "${message}", tôi nghĩ đây là một chủ đề hay.`,
-      `Tôi đã nhận được tin nhắn: "${message}". Còn gì khác tôi có thể giúp không?`
+      `Xin chào! Bạn vừa nói: "${userMessage}". Tôi là AI assistant của bạn.`,
+      `Cảm ơn bạn đã gửi: "${userMessage}". Tôi hiểu và sẵn sàng giúp đỡ.`,
+      `Thú vị! Về "${userMessage}", tôi nghĩ đây là một chủ đề hay.`,
+      `Tôi đã nhận được tin nhắn: "${userMessage}". Còn gì khác tôi có thể giúp không?`
     ];
 
     const response = responses[Math.floor(Math.random() * responses.length)];
+    
+    // Stream the response word by word
+    const words = response.split(' ');
+    let index = 0;
 
-    res.json({
-      response: response,
-      model: 'simple-ai',
-      timestamp: new Date().toISOString(),
-      status: 'success'
-    });
+    const streamInterval = setInterval(() => {
+      if (index < words.length) {
+        const token = words[index] + ' ';
+        res.write(`data: ${JSON.stringify({ token, done: false })}\n\n`);
+        index++;
+      } else {
+        res.write(`data: ${JSON.stringify({ token: '', done: true })}\n\n`);
+        res.end();
+        clearInterval(streamInterval);
+      }
+    }, 100); // Send a word every 100ms
 
   } catch (error) {
     console.error('Chat error:', error);
