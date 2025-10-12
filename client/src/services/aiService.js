@@ -1,12 +1,31 @@
 // client/src/services/aiService.js
+
+// Lấy base URL từ environment hoặc sử dụng default
+const getBaseUrl = () => {
+  // Trong production, sử dụng URL của Heroku backend
+  if (import.meta.env.PROD) {
+    return 'https://thuan-test1.herokuapp.com';
+  }
+  // Trong development, sử dụng localhost
+  return 'http://localhost:4321';
+};
+
 export async function chatStream(messages, onToken) {
-    const res = await fetch('http://localhost:4321/api/ai/test-chat', {
+    const baseUrl = getBaseUrl();
+    const res = await fetch(`${baseUrl}/api/ai/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include', // nếu bạn dùng cookie session
+      credentials: 'include',
       body: JSON.stringify({ messages }),
     });
-    if (!res.ok || !res.body) throw new Error('AI stream failed');
+    
+    if (!res.ok) {
+      throw new Error(`AI service error: ${res.status} ${res.statusText}`);
+    }
+    
+    if (!res.body) {
+      throw new Error('AI stream failed - no response body');
+    }
   
     const reader = res.body.getReader();
     const decoder = new TextDecoder('utf-8');
@@ -33,25 +52,27 @@ export async function chatStream(messages, onToken) {
         }
       }
     }
-  }
-  
-  export async function aiEventDescription(title, lang = 'vi') {
-    const res = await fetch('/api/ai/event/description', {
+}
+
+export async function aiEventDescription(title, lang = 'vi') {
+    const baseUrl = getBaseUrl();
+    const res = await fetch(`${baseUrl}/api/ai/event/description`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify({ title, lang }),
     });
-    return res.json(); // { content }
-  }
-  
-  export async function aiSuggestTags(description) {
-    const res = await fetch('/api/ai/event/suggest-tags', {
+    return res.json();
+}
+
+export async function aiSuggestTags(description) {
+    const baseUrl = getBaseUrl();
+    const res = await fetch(`${baseUrl}/api/ai/event/suggest-tags`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify({ description }),
     });
-    return res.json(); // { tags:[], category:"" }
-  }
+    return res.json();
+}
   
