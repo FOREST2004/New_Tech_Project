@@ -2,12 +2,8 @@
 
 // Lấy base URL từ environment hoặc sử dụng default
 const getBaseUrl = () => {
-  // Trong production, sử dụng URL của Heroku backend
-  if (import.meta.env.PROD) {
-    return 'https://thuan-test1.herokuapp.com';
-  }
-  // Trong development, sử dụng localhost
-  return 'http://localhost:4321';
+  // Sử dụng VITE_API_BASE từ .env file
+  return import.meta.env.VITE_API_BASE || 'http://localhost:4321';
 };
 
 export async function chatStream(messages, onToken) {
